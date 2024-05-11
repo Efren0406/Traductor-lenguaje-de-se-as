@@ -5,7 +5,11 @@ Proyecto para ingeniería de software
 Este comando sirve para activar el "virtual environment" de python y contar con las librerias necesarias para correr el programa
 En caso de necesitar instalar nuevas dependencias, realizarlo con normalidad procurando tener el venv activado
 
-```traductor\Scripts\activate.bat
+```bash
+# Activar venv
+traductor\Scripts\activate.bat
+```
 
-# Salir el venv
-```traductor\Scripts\deactivate.bat
+```bash
+# Desactivar venv
+traductor\Scripts\deactivate.bat
