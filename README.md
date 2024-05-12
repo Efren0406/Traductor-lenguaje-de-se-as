@@ -1,4 +1,4 @@
-# Traductor-lenguaje-de-se-as
+# Traductor lenguaje de señas
 Proyecto para ingeniería de software
 
 # Inicia el proyecto
