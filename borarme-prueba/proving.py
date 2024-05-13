@@ -2,10 +2,16 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import os
+import key
 
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+
+from gtts import gTTS
+import elevenlabs
+
+lenguage = 'es-us'
 
 mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
@@ -91,7 +97,7 @@ def prob_viz(res, actions, input_frame, colors):
 # 1. New detection variables
 sequence = []
 sentence = []
-predictions = []
+predictions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 res = [0, 0, 0]
 threshold = 0.4
 
@@ -127,6 +133,9 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                         sentence.append(actions[np.argmax(res)])
                 else:
                     sentence.append(actions[np.argmax(res)])
+                audio = elevenlabs.generate(text=sentence[-1], voide="Bella")
+                elevenlabs.play(audio)
+
 
         if len(sentence) > 5:
             sentence = sentence[-5:]
