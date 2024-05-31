@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Capturar Webcam</title>
+</head>
+<body>
+    <h1>Captura de Webcam</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <img id="processed-image" width="640" height="480" style="display:none;"/>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const processedImage = document.getElementById('processed-image');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                processFrame();
+            })
+            .catch(err => {
+                console.error("Ocurrió un error: " + err);
+            });
+
+        function processFrame() {
+            context.drawImage(video, 0, 0, 640, 480);
+            const dataUrl = canvas.toDataURL('image/png');
+            fetch('/upload/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'image=' + encodeURIComponent(dataUrl)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    processedImage.src = 'data:image/png;base64,' + data.processed_image;
+                    processedImage.style.display = 'block';
+                }
+                // Llamar a processFrame() de nuevo para el siguiente fotograma
+                requestAnimationFrame(processFrame);
+            })
+            .catch(error => {
+                console.error("Error al procesar el fotograma: ", error);
+                requestAnimationFrame(processFrame);
+            });
+        }
+    </script>
+</body>
+</html>
