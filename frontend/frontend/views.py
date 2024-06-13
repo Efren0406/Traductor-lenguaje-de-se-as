@@ -32,18 +32,12 @@ model.load_weights('action.h5')
 
 colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
 
-async def process_img(img):
-    loop = asyncio.get_event_loop()
-    image, results = await loop.run_in_executor(executor, mediapipe_detection, img)
-    return image, results
-
-def mediapipe_detection(image):
-    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image.flags.writeable = False
-        results = holistic.process(image)
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+def mediapipe_detection(image, model):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image.flags.writeable = False
+    results = model.process(image)
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     return image, results
 
 def prob_viz(res, actions, input_frame, colors):
@@ -90,49 +84,11 @@ async def upload_image(request):
     
     return JsonResponse({'status': 'error'})
 
-async def real_time_camera():
-    cap = cv2.VideoCapture(0)
-    sequence = []
-    sentence = []
-    predictions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    threshold = 0.4
-
-    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            image, results = mediapipe_detection(frame)
-            keypoints = extract_keypoints(results)
-            sequence.append(keypoints)
-            sequence = sequence[-30:]
-
-            if len(sequence) == 30:
-                res = model.predict(np.expand_dims(sequence, axis=0))[0]
-                predictions.append(np.argmax(res))
-
-                if np.unique(predictions[-10:])[0] == np.argmax(res):
-                    if res[np.argmax(res)] > threshold:
-                        if len(sentence) > 0:
-                            if actions[np.argmax(res)] != sentence[-1]:
-                                sentence.append(actions[np.argmax(res)])
-                        else:
-                            sentence.append(actions[np.argmax(res)])
-                
-                if len(sentence) > 5:
-                    sentence = sentence[-5:]
-
-                image = prob_viz(res, actions, image, colors)
-
-            cv2.imshow('OpenCV Feed', image)
-
-            if cv2.waitKey(10) & 0xFF == ord('q'):
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()
+async def process_img(img):
+    loop = asyncio.get_event_loop()
+    image, results = await loop.run_in_executor(executor, mediapipe_detection, img, mp_holistic.Holistic())
+    return image, results
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(real_time_camera())
+    loop.run_until_complete(upload_image())
