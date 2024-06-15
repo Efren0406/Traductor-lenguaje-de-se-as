@@ -87,7 +87,7 @@ body {
 }
 .main-content video{
     width: 100%;
-    height: auto;
+    height: 100%;
     max-width: 800px;
     border-radius: 10px;
 }
@@ -108,4 +108,15 @@ body {
     padding: 10px;
     font-size: 1.2em;
     width: 100%;
+}
+.traduccion p{
+    text-align: center;
+    font-size: 16px;
+    font-family: 'Courier New', Courier, monospace;
+    text-decoration: solid;
+}
+.traduccion {
+    width: 100%;
+    border-radius: 15px;
+    background: violet;
 }
