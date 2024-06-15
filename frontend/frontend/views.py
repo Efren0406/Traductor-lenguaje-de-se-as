@@ -32,6 +32,8 @@ model.load_weights('action.h5')
 
 colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
 
+sequence = []
+
 def mediapipe_detection(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image.flags.writeable = False
@@ -59,6 +61,7 @@ def index(request):
 
 @csrf_exempt
 async def upload_image(request):
+    global sequence
     if request.method == 'POST':
         image_data = request.POST.get('image')
         format, imgstr = image_data.split(';base64,')
@@ -72,15 +75,25 @@ async def upload_image(request):
         
         if cached_img:
             processed_img_base64 = cached_img
+            prediction = ""
         else:
             image, results = await process_img(img)
-            
+            keypoints = extract_keypoints(results)
+            sequence.append(keypoints)
+            sequence = sequence[-30:]
+
+            if len(sequence) == 30:
+                res = model.predict(np.expand_dims(sequence, axis=0))[0]
+                prediction = actions[np.argmax(res)]
+            else:
+                prediction = ""
+
             _, buffer = cv2.imencode('.png', image)
             processed_img_base64 = base64.b64encode(buffer).decode('utf-8')
             
             cache.set(cache_key, processed_img_base64, timeout=60*15)
         
-        return JsonResponse({'status': 'ok', 'processed_image': processed_img_base64})
+        return JsonResponse({'status': 'ok', 'processed_image': processed_img_base64, 'translation': prediction})
     
     return JsonResponse({'status': 'error'})
 

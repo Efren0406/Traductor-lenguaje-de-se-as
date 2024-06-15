@@ -1,54 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Capturar Webcam</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandSpeak AI</title>
+    
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <h1>Captura de Webcam</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-    <img id="processed-image" width="640" height="480" style="display:none;"/>
+    <div class="container">
+        <div class="header">
+            <h1>Bienvenido a <span>HandSpeak</span></h1>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <ul>
+                    <li><button>Traducir</button></li>
+                    <li><button>Ayuda</button></li>
+                    <li><button>Exportar</button></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <video id="video" width="640" height="480" autoplay></video>
+                <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                
+                <p id="translation">Su traducción se verá aquí</p>
+                <script>
+                    const video = document.getElementById('video');
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
+                    const processedImage = document.getElementById('processed-image');
+                    const translationText = document.getElementById('translation');
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        const processedImage = document.getElementById('processed-image');
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(stream => {
+                            video.srcObject = stream;
+                            processFrame();
+                        })
+                        .catch(err => {
+                            console.error("Ocurrió un error: " + err);
+                        });
 
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                processFrame();
-            })
-            .catch(err => {
-                console.error("Ocurrió un error: " + err);
-            });
-
-        function processFrame() {
-            context.drawImage(video, 0, 0, 640, 480);
-            const dataUrl = canvas.toDataURL('image/png');
-            fetch('/upload/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: 'image=' + encodeURIComponent(dataUrl)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    processedImage.src = 'data:image/png;base64,' + data.processed_image;
-                    processedImage.style.display = 'block';
-                }
-                // Llamar a processFrame() de nuevo para el siguiente fotograma
-                requestAnimationFrame(processFrame);
-            })
-            .catch(error => {
-                console.error("Error al procesar el fotograma: ", error);
-                requestAnimationFrame(processFrame);
-            });
-        }
-    </script>
+                    function processFrame() {
+                        context.drawImage(video, 0, 0, 640, 480);
+                        const dataUrl = canvas.toDataURL('image/png');
+                        fetch('/upload/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: 'image=' + encodeURIComponent(dataUrl)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'ok') {
+                                processedImage.src = 'data:image/png;base64,' + data.processed_image;
+                                processedImage.style.display = 'block';
+                                translationText.textContent = data.translation ? data.translation : 'No se detectó ningún gesto';
+                            }
+                            requestAnimationFrame(processFrame);
+                        })
+                        .catch(error => {
+                            console.error("Error al procesar el fotograma: ", error);
+                            requestAnimationFrame(processFrame);
+                        });
+                    }
+                </script>
+                <br>    
+                <button class="conocenos-button">Conocenos</button>
+            </div>
+        </div>
+        <div class="footer">
+            HandSpeak AI
+        </div>
+    </div>
 </body>
 </html>
