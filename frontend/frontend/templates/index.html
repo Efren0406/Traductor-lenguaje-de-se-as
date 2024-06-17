@@ -22,17 +22,14 @@
                 <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
                 <br>   
                 <div class="sidebar">
-                    
-                        <button>Traducir</button>
-                        <button>Ayuda</button>
-                        <button>Exportar</button>
-                    
+                    <button>Traducir</button>
+                    <button>Ayuda</button>
+                    <button>Exportar</button>
                 </div>
                 <script>
                     const video = document.getElementById('video');
                     const canvas = document.getElementById('canvas');
                     const context = canvas.getContext('2d');
-                    const processedImage = document.getElementById('processed-image');
                     const translationText = document.getElementById('translation');
 
                     navigator.mediaDevices.getUserMedia({ video: true })
@@ -47,6 +44,7 @@
                     function processFrame() {
                         context.drawImage(video, 0, 0, 640, 480);
                         const dataUrl = canvas.toDataURL('image/png');
+                        console.log("Sending image to backend");
                         fetch('/upload/', {
                             method: 'POST',
                             headers: {
@@ -57,9 +55,8 @@
                         })
                         .then(response => response.json())
                         .then(data => {
+                            console.log("Response from backend:", data);
                             if (data.status === 'ok') {
-                                processedImage.src = 'data:image/png;base64,' + data.processed_image;
-                                processedImage.style.display = 'block';
                                 translationText.textContent = data.translation ? data.translation : 'No se detectó ningún gesto';
                             }
                             requestAnimationFrame(processFrame);
