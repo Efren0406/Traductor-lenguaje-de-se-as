@@ -69,6 +69,7 @@ body {
     cursor: pointer;
     font-size: 1em;
 }
+
 .sidebar button:hover {
     background-color: #0089E7;
 }
