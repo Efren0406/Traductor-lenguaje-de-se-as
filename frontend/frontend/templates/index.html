@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandSpeak AI</title>
+    
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bienvenido a <span>HandSpeak</span></h1>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <ul>
+                    <li><button>Traducir</button></li>
+                    <li><button>Ayuda</button></li>
+                    <li><button>Exportar</button></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <video id="video" width="640" height="480" autoplay></video>
+                <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+                <div class="traduccion">
+                    <p id="translation">Su traducción se verá aquí</p>
+                </div>
+                <br>
+                <button class="conocenos-button">Conocenos</button>
+            </div>
+        </div>
+        <div class="footer">
+            HandSpeak AI
+        </div>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const translationText = document.getElementById('translation');
+
+        if (!video || !canvas || !context || !translationText) {
+            console.error("Missing essential DOM elements.");
+        } else {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    setInterval(processFrame, 1000); // Captura un frame cada segundo
+                })
+                .catch(err => {
+                    console.error("Ocurrió un error: " + err);
+                });
+
+            function processFrame() {
+                context.drawImage(video, 0, 0, 640, 480);
+                const dataUrl = canvas.toDataURL('image/png');
+                console.log("Sending image to backend");
+                fetch('/upload/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: 'image=' + encodeURIComponent(dataUrl)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Response from backend:", data);
+                    if (data.status === 'ok') {
+                        translationText.textContent = data.translation ? data.translation : 'No se detectó ningún gesto';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error al procesar el fotograma: ", error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
