@@ -35,11 +35,13 @@ colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
 sequence = []
 
 def mediapipe_detection(image, model):
+    print("mediapipe_detection: Start processing image")
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image.flags.writeable = False
     results = model.process(image)
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    print("mediapipe_detection: Finished processing image")
     return image, results
 
 def prob_viz(res, actions, input_frame, colors):
@@ -63,6 +65,7 @@ def index(request):
 async def upload_image(request):
     global sequence
     if request.method == 'POST':
+        print("upload_image: Received POST request")
         image_data = request.POST.get('image')
         format, imgstr = image_data.split(';base64,')
         ext = format.split('/')[-1]
@@ -74,9 +77,11 @@ async def upload_image(request):
         cached_img = cache.get(cache_key)
         
         if cached_img:
+            print("upload_image: Using cached image")
             processed_img_base64 = cached_img
             prediction = ""
         else:
+            print("upload_image: Processing new image")
             image, results = await process_img(img)
             keypoints = extract_keypoints(results)
             sequence.append(keypoints)
@@ -85,6 +90,7 @@ async def upload_image(request):
             if len(sequence) == 30:
                 res = model.predict(np.expand_dims(sequence, axis=0))[0]
                 prediction = actions[np.argmax(res)]
+                print(f"upload_image: Prediction - {prediction}")
             else:
                 prediction = ""
 
@@ -98,8 +104,10 @@ async def upload_image(request):
     return JsonResponse({'status': 'error'})
 
 async def process_img(img):
+    print("process_img: Start processing image in executor")
     loop = asyncio.get_event_loop()
     image, results = await loop.run_in_executor(executor, mediapipe_detection, img, mp_holistic.Holistic())
+    print("process_img: Finished processing image in executor")
     return image, results
 
 if __name__ == '__main__':
