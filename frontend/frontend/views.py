@@ -34,6 +34,10 @@ colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
 
 sequence = []
 
+prediction = ""
+prev_word = ""
+word = ""
+
 def mediapipe_detection(image, model):
     print("mediapipe_detection: Start processing image")
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -64,6 +68,10 @@ def index(request):
 @csrf_exempt
 async def upload_image(request):
     global sequence
+    global prediction
+    global prev_word
+    global word
+
     if request.method == 'POST':
         print("upload_image: Received POST request")
         image_data = request.POST.get('image')
@@ -79,7 +87,6 @@ async def upload_image(request):
         if cached_img:
             print("upload_image: Using cached image")
             processed_img_base64 = cached_img
-            prediction = ""
         else:
             print("upload_image: Processing new image")
             image, results = await process_img(img)
@@ -89,10 +96,11 @@ async def upload_image(request):
 
             if len(sequence) == 30:
                 res = model.predict(np.expand_dims(sequence, axis=0))[0]
-                prediction = actions[np.argmax(res)]
+                prev_word = word
+                word = actions[np.argmax(res)]
+                if (prev_word != word):
+                    prediction += actions[np.argmax(res)]
                 print(f"upload_image: Prediction - {prediction}")
-            else:
-                prediction = ""
 
             _, buffer = cv2.imencode('.png', image)
             processed_img_base64 = base64.b64encode(buffer).decode('utf-8')
@@ -104,10 +112,8 @@ async def upload_image(request):
     return JsonResponse({'status': 'error'})
 
 async def process_img(img):
-    print("process_img: Start processing image in executor")
     loop = asyncio.get_event_loop()
     image, results = await loop.run_in_executor(executor, mediapipe_detection, img, mp_holistic.Holistic())
-    print("process_img: Finished processing image in executor")
     return image, results
 
 if __name__ == '__main__':
