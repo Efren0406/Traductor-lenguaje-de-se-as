@@ -44,7 +44,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
     while cap.isOpened():
         # Read feed
         ret, frame = cap.read()
-
+        
         # Make detections
         image, results = mediapipe_detection(frame, holistic)
 
