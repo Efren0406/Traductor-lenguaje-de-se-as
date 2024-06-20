@@ -60,7 +60,11 @@
                         .then(data => {
                             console.log("Response from backend:", data);
                             if (data.status === 'ok') {
-                                translationText.textContent = data.translation ? data.translation : 'No se detectó ningún gesto';
+                                const translation = data.translation ? data.translation : 'No se detectó ningún gesto';
+                                translationText.textContent = translation;
+                                if (data.translation) {
+                                    speak(translation);
+                                }
                             }
                             requestAnimationFrame(processFrame);
                         })
@@ -68,6 +72,13 @@
                             console.error("Error al procesar el fotograma: ", error);
                             requestAnimationFrame(processFrame);
                         });
+                    }
+
+                    function speak(text) {
+                        const msg = new SpeechSynthesisUtterance();
+                        msg.text = text;
+                        msg.lang = 'es-ES';
+                        window.speechSynthesis.speak(msg);
                     }
                 </script>
                 <br>    
