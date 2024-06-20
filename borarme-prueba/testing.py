@@ -9,7 +9,9 @@ import os
 DATA_PATH = os.path.join('MP_Data')
 
 # Actions that we try to detect
-actions = np.array(['hello', 'thanks', 'iloveyou'])
+actions = np.array(
+                    ['mark', 'yo', 'tu', 'ellos', 'ellas', 'nosotros', 'el', 'ella', 'hola', 'gracias', 'buenos dias']
+                )
 
 # Thirty videos worth of data
 no_sequences = 30

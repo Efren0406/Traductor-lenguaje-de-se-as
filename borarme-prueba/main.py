@@ -20,21 +20,21 @@ def mediapipe_detection(image, model):
     return image, results
 
 def draw_styled_landmarks(image, results):
-    mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.HAND_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1),
-                              mp_drawing.DrawingSpec(color=(80,250,125), thickness=1, circle_radius=1)
-                              ) # Draw face connections
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
-                              mp_drawing.DrawingSpec(color=(80,44,125), thickness=2, circle_radius=2)
-                              ) # Draw pose connections
+    # mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.HAND_CONNECTIONS,
+    #                           mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1),
+    #                           mp_drawing.DrawingSpec(color=(80,250,125), thickness=1, circle_radius=1)
+    #                           ) # Draw face connections
+    # mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
+    #                           mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
+    #                           mp_drawing.DrawingSpec(color=(80,44,125), thickness=2, circle_radius=2)
+    #                           ) # Draw pose connections
     mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(121,22,10), thickness=1, circle_radius=1),
-                              mp_drawing.DrawingSpec(color=(121,44,125), thickness=1, circle_radius=1)
+                              mp_drawing.DrawingSpec(color=(121,22,10), thickness=1, circle_radius=1)
+                            #   mp_drawing.DrawingSpec(color=(121,44,125), thickness=1, circle_radius=1)
                               ) # Draw left hand connections
     mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1),
-                              mp_drawing.DrawingSpec(color=(80,250,125), thickness=1, circle_radius=1)
+                              mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1)
+                            #   mp_drawing.DrawingSpec(color=(80,250,125), thickness=1, circle_radius=1)
                               ) # Draw right hand connections
 
 def extract_keypoints(results):
@@ -51,7 +51,9 @@ def extract_keypoints(results):
 DATA_PATH = os.path.join('MP_Data')
 
 # Actions that we try to detect
-actions = np.array(['hello', 'thanks', 'iloveyou'])
+actions = np.array(
+                    ['mark', 'yo', 'tu', 'ellos', 'ellas', 'nosotros', 'el', 'ella', 'hola', 'gracias', 'buenos dias']
+                )
 
 # Thirty videos worth of data
 no_sequences = 30
@@ -66,15 +68,18 @@ for action in actions:
         except:
             pass
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(3)
 # Access mediapipe model
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     # loop through actions
     for action in actions:
         # loop through sequences aka videos
         for sequence in range(no_sequences):
+
+            start = time.time()
+
             #loop through video length aka sequence length
-            for frame_num in range(sequence_length):
+            for frame_num in range(sequence_length + 50):
 
                 # Read feed
                 ret, frame = cap.read()
@@ -85,21 +90,25 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                 # Draw landmarks
                 draw_styled_landmarks(image, results)
 
-                # Apply wait logic
-                if frame_num == 0:
-                    cv2.putText(image, 'STARTING COLLECTION', (120,200),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 4, cv2.LINE_AA)
-                    cv2.putText(image, 'Collecting frames for {} Video Number {}'.format(action, sequence), (15,12),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
-                    cv2.waitKey(3000)
-                else:
-                    cv2.putText(image, 'Collecting frames for {} Video Number {}'.format(action, sequence), (15,12),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+                current = int((time.time() - start) % 60)
 
-                # New Export keypoints
-                keypoints = extract_keypoints(results)
-                npy_path = os.path.join(DATA_PATH, action, str(sequence), str(frame_num))
-                np.save(npy_path, keypoints)
+                # Apply wait logic
+                if current < 6:
+                    cv2.putText(image, 'Starting Collection of "{}" in {}'.format(action, 6 - current), (120,200),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 4, cv2.LINE_AA)
+                    # cv2.putText(image, 'Collecting frames for {} Video Number {}'.format(action, sequence), (15,12),
+                    #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+                    # cv2.waitKey(3000)
+                elif current == 6:
+                    startFrame = frame_num
+                elif frame_num - startFrame < 30:
+                    cv2.putText(image, 'Collecting frames for "{}" Video Number {}, {}'.format(action, sequence, frame_num - 50), (50,50),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
+
+                    # New Export keypoints
+                    keypoints = extract_keypoints(results)
+                    npy_path = os.path.join(DATA_PATH, action, str(sequence), str(frame_num - startFrame))
+                    np.save(npy_path, keypoints)
 
                 # Show to screen
                 cv2.imshow('OpenCV Feed', image)

@@ -5,7 +5,8 @@ import os
 
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
 
 from gtts import gTTS
 import elevenlabs
@@ -52,7 +53,9 @@ def extract_keypoints(results):
 DATA_PATH = os.path.join('MP_Data')
 
 # Actions that we try to detect
-actions = np.array(['hello', 'thanks', 'iloveyou'])
+actions = np.array(
+                    ['mark', 'yo', 'tu', 'ellos', 'ellas', 'nosotros', 'el', 'ella', 'hola', 'gracias', 'buenos dias']
+                )
 
 # Thirty videos worth of data
 no_sequences = 30
@@ -74,13 +77,18 @@ for action in actions:
 
 model = Sequential()
 model.add(LSTM(64, return_sequences=True, activation='relu', input_shape=(30,1662)))
+model.add(Dropout(0.2))
 model.add(LSTM(128, return_sequences=True, activation='relu'))
+model.add(Dropout(0.2))
 model.add(LSTM(64, return_sequences=False, activation='relu'))
+model.add(Dropout(0.2))
 model.add(Dense(64, activation='relu'))
 model.add(Dense(32, activation='relu'))
 model.add(Dense(actions.shape[0], activation='softmax'))
 
-model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
+optimizer = Adam(learning_rate=0.0001)
+
+model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
 model.load_weights('action.h5')
 
 colors = [(245,117,16), (117,245,16), (16,117,245)]
@@ -100,7 +108,7 @@ predictions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 res = [0, 0, 0]
 threshold = 0.4
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 # Access mediapipe model
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
@@ -111,7 +119,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         image, results = mediapipe_detection(frame, holistic)
 
         # Draw landmarks
-        draw_styled_landmarks(image, results)
+        # draw_styled_landmarks(image, results)
 
         # 2. Prediction logic
         keypoints = extract_keypoints(results)
@@ -139,7 +147,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         if len(sentence) > 5:
             sentence = sentence[-5:]
 
-        image = prob_viz(res, actions, image, colors)
+        # image = prob_viz(res, actions, image, colors)
 
         cv2.rectangle(image, (0,0), (640, 40), (245, 117, 16), -1)
         cv2.putText(image, ' '.join(sentence), (3,30), 
