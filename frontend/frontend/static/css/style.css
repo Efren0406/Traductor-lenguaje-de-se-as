@@ -1,25 +1,25 @@
 body {
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+    margin: 0%;
+    padding: 0%;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100%;
     background-color: #f5f5f5;
 }
 .container {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100vh;
+    width: 90%;
+    height: 100%;
     max-width: 1200px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: white;
 }
 .header {
     text-align: center;
-    padding: 20px;
+    padding: 1.5%;
     border-bottom: 2px solid #ccc;
 }
 .header h1 {
@@ -27,59 +27,47 @@ body {
     margin: 0;
 }
 .header span {
-    color: #007bff;
+    color: #0089E7;
 }
 .content {
     display: flex;
     flex: 1;
-    height: 100%; /* Asegura que el contenido ocupe todo el espacio disponible */
 }
 .sidebar {
-    width: 250px;
-    padding: 20px;
-    background-color: #f9f9f9;
+    width:100%;
+    padding: 10px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    border-right: 2px solid #ccc;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    justify-content: center;
 }
 .sidebar h2 {
     font-size: 1.5em;
-    margin-bottom: 20px;
+    margin-bottom: 10%;
 }
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-    width: 100%;
-}
-.sidebar ul li {
-    margin-bottom: 10px;
-    width: 100%;
-}
+
 .sidebar button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
+    padding: 10px 20px;
+    background-color: #0089E7;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
+    margin-right: 10% ;
+    margin-left: 10%;
 }
 .sidebar button:hover {
-    background-color: #0056b3;
+    background-color: #0089E7;
 }
 .main-content {
     padding: 20px;
+    text-align: center;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centra el contenido verticalmente */
+    justify-content: center;
     align-items: center;
-    width: calc(100% - 250px); /* Ajustar ancho considerando el sidebar */
-    height: 100%; /* Asegura que main-content ocupe todo el alto disponible */
-    box-sizing: border-box; /* Incluye el padding en el cálculo de altura */
 }
 .image-container {
     border: 2px solid #ccc;
@@ -88,15 +76,15 @@ body {
     background-color: #fff;
     margin-bottom: 20px;
 }
-.main-content video {
+.main-content video{
     width: 100%;
-    height: auto; /* Ajusta la altura automáticamente */
+    height: 100%;
     max-width: 800px;
     border-radius: 10px;
 }
 .main-content .conocenos-button {
     padding: 10px 20px;
-    background-color: #007bff;
+    background-color: #0089E7;
     color: white;
     border: none;
     border-radius: 5px;
@@ -104,7 +92,7 @@ body {
     font-size: 1em;
 }
 .main-content .conocenos-button:hover {
-    background-color: #0056b3;
+    background-color: #0089E7;
 }
 .footer {
     text-align: justify;
@@ -112,18 +100,14 @@ body {
     font-size: 1.2em;
     width: 100%;
 }
-.traduccion p {
+.traduccion p{
     text-align: center;
     font-size: 16px;
     font-family: 'Courier New', Courier, monospace;
     text-decoration: solid;
 }
 .traduccion {
-    width: 100%;
+    width: 50%;
     border-radius: 15px;
-    background: violet;
-    margin-top: 20px;
-    padding: 10px; /* Ajustar el padding para mejorar la apariencia */
-    box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
-    text-align: center; /* Centra el texto */
+    background: #C4E8FF;
 }

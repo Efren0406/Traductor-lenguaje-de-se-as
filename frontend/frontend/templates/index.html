@@ -1,12 +1,76 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HandSpeak AI</title>
-    
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <style>
+        /* Estilos para el modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-content img {
+            width: 40px;
+            height: 40px;
+            margin: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .team-member {
+            display: block;
+            margin: 10px 0;
+        }
+
+        .logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 10px 0;
+        }
+
+        .logos img {
+            height: 60px;
+            width: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,68 +78,117 @@
             <h1>Bienvenido a <span>HandSpeak</span></h1>
         </div>
         <div class="content">
-            <div class="sidebar">
-                <ul>
-                    <li><button>Traducir</button></li>
-                    <li><button>Ayuda</button></li>
-                    <li><button>Exportar</button></li>
-                </ul>
+            <div class="traduccion">
+                <p id="translation">Su traducción se verá aquí</p>
             </div>
             <div class="main-content">
                 <video id="video" width="640" height="480" autoplay></video>
                 <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-
-                <div class="traduccion">
-                    <p id="translation">Su traducción se verá aquí</p>
+                <br>
+                <div class="sidebar">
+                    <button id="help-button">Ayuda</button>
+                    <button id="export-button">Exportar</button>
                 </div>
                 <br>
-                <button class="conocenos-button">Conocenos</button>
+                <button class="conocenos-button">Conócenos</button>
             </div>
         </div>
         <div class="footer">
             HandSpeak AI
         </div>
     </div>
+
+    <!-- Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>HandSpeak</h2>
+            <p>Escuela Superior de Cómputo (ESCOM IPN)</p>
+            <div class="logos">
+                <img src="{% static 'img/logo_escom.png' %}" alt="Logo ESCOM">
+                <img src="{% static 'img/logo_ipn.png' %}" alt="Logo IPN">
+            </div>
+            <p>Equipo Número 3</p>
+            <p>Briones Rayo Oscar</p>
+            <p>Dominguez Ortega Antonio de Jesus</p>
+            <p>Jimenez Luna Rodrigo Efren</p>
+            <p>Lopez Rueda Cristian</p>
+            <p>Maza Orozco Josue Vicente</p>
+            <p>Zurita Cariño Emanuel Einnar</p>
+            <p></p>
+            <br><br>
+            <a href="https://github.com" target="_blank"><img src="{% static 'img/github.png' %}" alt="GitHub"></a>
+            <a href="mailto:your-email@example.com"><img src="{% static 'img/gmail.png' %}" alt="Gmail"></a>
+        </div>
+    </div>
+
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
         const translationText = document.getElementById('translation');
+        const exportButton = document.getElementById('export-button');
 
-        if (!video || !canvas || !context || !translationText) {
-            console.error("Missing essential DOM elements.");
-        } else {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    video.srcObject = stream;
-                    setInterval(processFrame, 1000); // Captura un frame cada segundo
-                })
-                .catch(err => {
-                    console.error("Ocurrió un error: " + err);
-                });
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                processFrame();
+            })
+            .catch(err => {
+                console.error("Ocurrió un error: " + err);
+                alert("No se pudo acceder a la cámara. Por favor, verifica los permisos.");
+            });
 
-            function processFrame() {
-                context.drawImage(video, 0, 0, 640, 480);
-                const dataUrl = canvas.toDataURL('image/png');
-                console.log("Sending image to backend");
-                fetch('/upload/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: 'image=' + encodeURIComponent(dataUrl)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Response from backend:", data);
-                    if (data.status === 'ok') {
-                        translationText.textContent = data.translation ? data.translation : 'No se detectó ningún gesto';
-                    }
-                })
-                .catch(error => {
-                    console.error("Error al procesar el fotograma: ", error);
-                });
+        function processFrame() {
+            context.drawImage(video, 0, 0, 640, 480);
+            const dataUrl = canvas.toDataURL('image/png');
+            fetch('/upload/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'image=' + encodeURIComponent(dataUrl)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    translationText.textContent = data.translation ? data.translation : 'No se detectó ningún gesto';
+                }
+                requestAnimationFrame(processFrame);
+            })
+            .catch(error => {
+                console.error("Error al procesar el fotograma: ", error);
+                requestAnimationFrame(processFrame);
+            });
+        }
+
+        exportButton.addEventListener('click', function() {
+            const translationContent = translationText.textContent;
+            const blob = new Blob([translationContent], { type: 'text/plain' });
+            const anchor = document.createElement('a');
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = 'traduccion.txt';
+            anchor.click();
+            URL.revokeObjectURL(anchor.href);
+        });
+
+        // Modal script
+        const modal = document.getElementById("myModal");
+        const btn = document.querySelector(".conocenos-button");
+        const span = document.getElementsByClassName("close")[0];
+
+        btn.onclick = function() {
+            modal.style.display = "flex";
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
             }
         }
     </script>
